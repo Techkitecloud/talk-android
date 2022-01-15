@@ -312,6 +312,7 @@ class ChatController(args: Bundle) :
         if (conversationUser != null) {
             val apiVersion = ApiUtils.getConversationApiVersion(conversationUser, intArrayOf(ApiUtils.APIv4, 1))
 
+            Log.d(TAG, "getRoomInfo - getRoomAPI - calling")
             ncApi?.getRoom(credentials, ApiUtils.getUrlForRoom(apiVersion, conversationUser.baseUrl, roomToken))
                 ?.subscribeOn(Schedulers.io())
                 ?.observeOn(AndroidSchedulers.mainThread())
@@ -322,6 +323,7 @@ class ChatController(args: Bundle) :
 
                     @Suppress("Detekt.TooGenericExceptionCaught")
                     override fun onNext(roomOverall: RoomOverall) {
+                        Log.d(TAG, "getRoomInfo - getRoomAPI - got response")
                         currentConversation = roomOverall.ocs.data
                         Log.d(
                             TAG,
@@ -369,6 +371,7 @@ class ChatController(args: Bundle) :
             apiVersion = ApiUtils.getConversationApiVersion(conversationUser, intArrayOf(ApiUtils.APIv4, 1))
         }
 
+        Log.d(TAG, "handleFromNotification - getRooms - calling")
         ncApi?.getRooms(credentials, ApiUtils.getUrlForRooms(apiVersion, conversationUser?.baseUrl))
             ?.subscribeOn(Schedulers.io())?.observeOn(AndroidSchedulers.mainThread())
             ?.subscribe(object : Observer<RoomsOverall> {
@@ -377,6 +380,7 @@ class ChatController(args: Bundle) :
                 }
 
                 override fun onNext(roomsOverall: RoomsOverall) {
+                    Log.d(TAG, "handleFromNotification - getRooms - got response")
                     for (conversation in roomsOverall.ocs.data) {
                         if (roomId == conversation.roomId) {
                             roomToken = conversation.token
@@ -1549,6 +1553,7 @@ class ChatController(args: Bundle) :
 
         cancelNotificationsForCurrentConversation()
 
+        Log.d(TAG, "onAttach inConversation: " + inConversation.toString() + " wasDetached: " + wasDetached.toString())
         if (inConversation) {
             if (wasDetached) {
                 currentConversation?.sessionId = "0"
@@ -1641,6 +1646,7 @@ class ChatController(args: Bundle) :
     }
 
     private fun joinRoomWithPassword() {
+        Log.d(TAG, "joinRoomWithPassword start: " + (currentConversation == null).toString())
 
         if (currentConversation == null ||
             TextUtils.isEmpty(currentConversation?.sessionId) ||
@@ -1652,6 +1658,7 @@ class ChatController(args: Bundle) :
                 apiVersion = ApiUtils.getConversationApiVersion(conversationUser, intArrayOf(ApiUtils.APIv4, 1))
             }
 
+            Log.d(TAG, "joinRoomWithPassword - joinRoom - calling")
             ncApi?.joinRoom(
                 credentials,
                 ApiUtils.getUrlForParticipantsActive(apiVersion, conversationUser?.baseUrl, roomToken),
@@ -1667,6 +1674,7 @@ class ChatController(args: Bundle) :
 
                     @Suppress("Detekt.TooGenericExceptionCaught")
                     override fun onNext(roomOverall: RoomOverall) {
+                        Log.d(TAG, "joinRoomWithPassword - joinRoom - got response")
                         inConversation = true
                         currentConversation?.sessionId = roomOverall.ocs.data.sessionId
 
@@ -1732,6 +1740,7 @@ class ChatController(args: Bundle) :
             apiVersion = ApiUtils.getConversationApiVersion(conversationUser, intArrayOf(ApiUtils.APIv4, 1))
         }
 
+        Log.d(TAG, "leaveRoom - leaveRoom - calling")
         ncApi?.leaveRoom(
             credentials,
             ApiUtils.getUrlForParticipantsActive(
@@ -1748,6 +1757,7 @@ class ChatController(args: Bundle) :
                 }
 
                 override fun onNext(genericOverall: GenericOverall) {
+                    Log.d(TAG, "leaveRoom - leaveRoom - got response")
                     checkingLobbyStatus = false
 
                     if (lobbyTimerHandler != null) {
@@ -1764,6 +1774,7 @@ class ChatController(args: Bundle) :
                     }
 
                     if (!isDestroyed && !isBeingDestroyed && !wasDetached) {
+                        Log.d(TAG, "leaveRoom - leaveRoom - popCurrentController")
                         router.popCurrentController()
                     }
                 }
@@ -1933,6 +1944,7 @@ class ChatController(args: Bundle) :
 
             if (lookIntoFuture > 0) {
                 val finalTimeout = timeout
+                Log.d(TAG, "pullChatMessages - pullChatMessages[lookIntoFuture > 0] - calling")
                 ncApi?.pullChatMessages(
                     credentials,
                     ApiUtils.getUrlForChat(apiVersion, conversationUser?.baseUrl, roomToken), fieldMap
@@ -1947,8 +1959,10 @@ class ChatController(args: Bundle) :
 
                         @Suppress("Detekt.TooGenericExceptionCaught")
                         override fun onNext(response: Response<*>) {
+                            Log.d(TAG, "pullChatMessages - pullChatMessages[lookIntoFuture > 0] - got response")
                             try {
                                 if (response.code() == 304) {
+                                    Log.d(TAG, "pullChatMessages - quasi recursive call to pullChatMessages")
                                     pullChatMessages(1, setReadMarker, xChatLastCommonRead)
                                 } else if (response.code() == 412) {
                                     futurePreconditionFailed = true
@@ -1971,6 +1985,7 @@ class ChatController(args: Bundle) :
                         }
                     })
             } else {
+                Log.d(TAG, "pullChatMessages - pullChatMessages[lookIntoFuture <= 0] - calling")
                 ncApi?.pullChatMessages(
                     credentials,
                     ApiUtils.getUrlForChat(apiVersion, conversationUser?.baseUrl, roomToken), fieldMap
@@ -1985,6 +2000,7 @@ class ChatController(args: Bundle) :
 
                         @Suppress("Detekt.TooGenericExceptionCaught")
                         override fun onNext(response: Response<*>) {
+                            Log.d(TAG, "pullChatMessages - pullChatMessages[lookIntoFuture <= 0] - got response")
                             try {
                                 if (response.code() == 412) {
                                     pastPreconditionFailed = true
