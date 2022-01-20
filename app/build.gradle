@@ -34,6 +34,20 @@ configurations {
     ktlint
 }
 
+def urlFile = { url, fileName ->
+    File file = new File("$buildDir/download/${fileName}")
+    file.parentFile.mkdirs()
+    if (!file.exists()) {
+        new URL(url).withInputStream { downloadStream ->
+            file.withOutputStream { fileOut ->
+                fileOut << downloadStream
+            }
+        }
+    }
+    files(file.absolutePath)
+}
+
+
 android {
     compileSdkVersion 30
     buildToolsVersion '30.0.3'
@@ -240,7 +254,8 @@ dependencies {
     kapt "com.jakewharton:butterknife-compiler:${butterknifeVersion}"
     implementation 'eu.davidea:flexible-adapter:5.1.0'
     implementation 'eu.davidea:flexible-adapter-ui:1.0.0'
-    implementation 'org.webrtc:google-webrtc:1.0.32006'
+    implementation urlFile('https://github.com/nextcloud-releases/talk-clients-webrtc/releases/download/96.4664.0-RC1/libwebrtc-96.4664.0.aar',
+        'libwebrtc-96.4664.0.aar')
     implementation 'com.yarolegovich:lovely-dialog:1.1.1'
     implementation 'com.yarolegovich:mp:1.1.6'
     implementation 'me.zhanghai.android.effortlesspermissions:library:1.1.0'
