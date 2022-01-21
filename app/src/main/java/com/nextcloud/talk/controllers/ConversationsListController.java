@@ -284,6 +284,8 @@ public class ConversationsListController extends BaseController implements Searc
 
     @Override
     protected void onAttach(@NonNull View view) {
+        Log.d(TAG, "onAttach: Controller: " + System.identityHashCode(this) +
+            " Activity: " + System.identityHashCode(getActivity()));
         super.onAttach(view);
         if (!eventBus.isRegistered(this)) {
             eventBus.register(this);
@@ -308,6 +310,8 @@ public class ConversationsListController extends BaseController implements Searc
 
     @Override
     protected void onDetach(@NonNull View view) {
+        Log.d(TAG, "onDetach: Controller: " + System.identityHashCode(this) +
+            " Activity: " + System.identityHashCode(getActivity()));
         super.onDetach(view);
         eventBus.unregister(this);
     }
@@ -461,11 +465,14 @@ public class ConversationsListController extends BaseController implements Searc
 
         int apiVersion = ApiUtils.getConversationApiVersion(currentUser, new int[]{ApiUtils.APIv4, ApiUtils.APIv3, 1});
 
+        long startNanoTime = System.nanoTime();
+        Log.d(TAG, "fetchData - getRooms - calling: " + startNanoTime);
         roomsQueryDisposable = ncApi.getRooms(credentials, ApiUtils.getUrlForRooms(apiVersion,
                                                                                    currentUser.getBaseUrl()))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(roomsOverall -> {
+                    Log.d(TAG, "fetchData - getRooms - got response: " + startNanoTime);
 
                     if (adapterWasNull) {
                         adapterWasNull = false;
@@ -534,6 +541,7 @@ public class ConversationsListController extends BaseController implements Searc
                     }
 
                 }, throwable -> {
+                    Log.e(TAG, "fetchData - getRooms - ERROR", throwable);
                     if (throwable instanceof HttpException) {
                         HttpException exception = (HttpException) throwable;
                         switch (exception.code()) {
