@@ -2,6 +2,8 @@
  * Nextcloud Talk application
  *
  * @author Mario Danic
+ * @author Tim Krüger
+ * Copyright (C) 2022 Tim Krüger <t@timkrueger.me>
  * Copyright (C) 2017 Mario Danic <mario@lovelyhq.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -151,15 +153,17 @@ public class MagicPeerConnectionWrapper {
         if (magicDataChannel != null) {
             magicDataChannel.dispose();
             magicDataChannel = null;
+            Log.d(TAG, "Disposed DataChannel");
+        } else {
+            Log.d(TAG, "DataChannel is null.");
         }
 
         if (peerConnection != null) {
-            if (localMediaStream != null) {
-                peerConnection.removeStream(localMediaStream);
-            }
-
-            peerConnection.close();
+            peerConnection.dispose();
             peerConnection = null;
+            Log.d(TAG, "Disposed PeerConnection");
+        } else {
+            Log.d(TAG, "PeerConnection is null.");
         }
     }
 
