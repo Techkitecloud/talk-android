@@ -37,6 +37,7 @@ import com.nextcloud.talk.models.json.signaling.DataChannelMessageNick;
 import com.nextcloud.talk.models.json.signaling.NCIceCandidate;
 
 import org.greenrobot.eventbus.EventBus;
+import org.webrtc.AudioTrack;
 import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
@@ -46,6 +47,7 @@ import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpReceiver;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
+import org.webrtc.VideoTrack;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -60,7 +62,7 @@ import autodagger.AutoInjector;
 
 @AutoInjector(NextcloudTalkApplication.class)
 public class MagicPeerConnectionWrapper {
-    private static final String TAG = "MagicPeerConWrapper";
+    private static final String TAG = MagicPeerConnectionWrapper.class.getCanonicalName();
 
     private List<IceCandidate> iceCandidates = new ArrayList<>();
     private PeerConnection peerConnection;
@@ -107,14 +109,18 @@ public class MagicPeerConnectionWrapper {
         this.isMCUPublisher = isMCUPublisher;
 
         PeerConnection.RTCConfiguration configuration = new PeerConnection.RTCConfiguration(iceServerList);
-        configuration.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
-
-        peerConnection = peerConnectionFactory.createPeerConnection(configuration, sdpConstraints,
-                                                                    new MagicPeerConnectionObserver());
+        configuration.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        peerConnection = peerConnectionFactory.createPeerConnection(configuration, new MagicPeerConnectionObserver());
 
         if (peerConnection != null) {
             if (localMediaStream != null) {
-                peerConnection.addStream(localMediaStream);
+                for(AudioTrack track : localMediaStream.audioTracks) {
+                    peerConnection.addTrack(track);
+                }
+
+                for(VideoTrack track : localMediaStream.videoTracks) {
+                    peerConnection.addTrack(track);
+                }
             }
 
             if (hasMCU || hasInitiated) {
